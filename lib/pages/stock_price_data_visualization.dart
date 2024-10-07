@@ -113,7 +113,6 @@ class StockPriceDataVisualization extends StatelessWidget {
                     lineBarsData: [
                       LineChartBarData(
                         color: ThemeColors.accentColor,
-                        // spots: stockData.asMap().entries.map((e) {
                         spots: stockData.asMap().entries.map((e) {
                           return FlSpot(
                             e.key.toDouble(),
@@ -125,9 +124,12 @@ class StockPriceDataVisualization extends StatelessWidget {
                     ],
                     titlesData: FlTitlesData(
                       leftTitles: AxisTitles(
+                        axisNameWidget: const Text(
+                          "Closing price (USD)",
+                        ),
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 55,
+                          reservedSize: 65,
                           // interval: (maxY - minY) / 5,
                           getTitlesWidget: (value, meta) =>
                               leftTitleWidgets(value, meta, stockData),
@@ -141,9 +143,12 @@ class StockPriceDataVisualization extends StatelessWidget {
                             SideTitles(showTitles: false, reservedSize: 10),
                       ),
                       bottomTitles: AxisTitles(
+                        axisNameWidget: const Text(
+                          "Time (HH:mm)",
+                        ),
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 50,
+                          reservedSize: 30,
                           getTitlesWidget: (value, meta) =>
                               bottomTitleWidgets(value, meta, stockData),
                         ),
