@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_code_test/constants/theme.dart';
+import 'package:flutter_code_test/environment.dart';
 import 'package:flutter_code_test/service/stock_price_service.dart';
 import 'package:intl/intl.dart';
 
@@ -9,7 +10,8 @@ class StockPriceDataVisualization extends StatelessWidget {
 
   Future<List<Map<String, dynamic>>> fetchStockData() async {
     try {
-      final data = await StockDataService.fetchStockData('AAPL');
+      final String ticker = AppEnvironment.stockTicker;
+      final data = await StockDataService.fetchStockData(ticker);
       return data;
     } catch (e) {
       throw Exception(e);

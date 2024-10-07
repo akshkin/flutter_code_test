@@ -3,10 +3,6 @@ import 'package:flutter_code_test/constants/theme.dart';
 import 'package:flutter_code_test/pages/notification_center.dart';
 import 'package:flutter_code_test/pages/stock_price_data_visualization.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
