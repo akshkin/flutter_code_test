@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_code_test/constants/theme.dart';
@@ -51,18 +53,8 @@ class StockPriceDataVisualization extends StatelessWidget {
       fontSize: 12,
       fontWeight: FontWeight.bold,
     );
-    String text = '';
-
-    if (stockData.isNotEmpty &&
-        value.toInt() >= 0 &&
-        value.toInt() < stockData.length) {
-      // extract the closing price from the stock data
-      final closingPrice = stockData[value.toInt()]["c"];
-      if (closingPrice != null) {
-        text = closingPrice
-            .toString(); // Convert the price to a string for display
-      }
-    }
+    String text =
+        value.toStringAsFixed(3); // Convert the price to a string for display
 
     return SideTitleWidget(
       axisSide: meta.axisSide,
@@ -111,7 +103,7 @@ class StockPriceDataVisualization extends StatelessWidget {
 
           return Center(
             child: AspectRatio(
-              aspectRatio: 1,
+              aspectRatio: 0.8,
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: LineChart(
@@ -121,6 +113,7 @@ class StockPriceDataVisualization extends StatelessWidget {
                     lineBarsData: [
                       LineChartBarData(
                         color: ThemeColors.accentColor,
+                        // spots: stockData.asMap().entries.map((e) {
                         spots: stockData.asMap().entries.map((e) {
                           return FlSpot(
                             e.key.toDouble(),
@@ -134,7 +127,8 @@ class StockPriceDataVisualization extends StatelessWidget {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 50,
+                          reservedSize: 55,
+                          // interval: (maxY - minY) / 5,
                           getTitlesWidget: (value, meta) =>
                               leftTitleWidgets(value, meta, stockData),
                         ),
@@ -149,6 +143,7 @@ class StockPriceDataVisualization extends StatelessWidget {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
+                          reservedSize: 50,
                           getTitlesWidget: (value, meta) =>
                               bottomTitleWidgets(value, meta, stockData),
                         ),
