@@ -13,6 +13,7 @@ class NotificationCenter extends StatefulWidget {
 class _NotificationCenterState extends State<NotificationCenter> {
   bool? _isSuccess;
   final List<String> _errorReports = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -20,7 +21,11 @@ class _NotificationCenterState extends State<NotificationCenter> {
     _startPolling();
   }
 
-  void _startPolling() {
+  void _startPolling() async {
+    await fetchStockData();
+    setState(() {
+      isLoading = false;
+    });
     Timer.periodic(const Duration(minutes: 1), (Timer timer) async {
       await fetchStockData();
     });
@@ -62,36 +67,40 @@ class _NotificationCenterState extends State<NotificationCenter> {
         title: const Text("Notification Center"),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            if (_isSuccess == true)
-              const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 100,
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 20),
+                  if (_isSuccess == true)
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 100,
+                    ),
+                  if (_isSuccess == false)
+                    const Icon(
+                      Icons.error,
+                      color: ThemeColors.errorColor,
+                      size: 100,
+                    ),
+                  const SizedBox(height: 20),
+                  // error list
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _errorReports.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(_errorReports[index],
+                              style: const TextStyle(
+                                  color: ThemeColors.errorColor)),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            if (_isSuccess == false)
-              const Icon(
-                Icons.error,
-                color: ThemeColors.errorColor,
-                size: 100,
-              ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _errorReports.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(_errorReports[index],
-                        style: const TextStyle(color: ThemeColors.errorColor)),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
