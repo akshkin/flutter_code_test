@@ -1,3 +1,3 @@
 enum Prices { AAPL, NVDA }
 
-enum Evironments { dev, prod }
+enum Environment { dev, prod }
