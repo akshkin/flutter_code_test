@@ -48,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
-            label: 'Stick Data',
+            label: 'Stock Data',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
