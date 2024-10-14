@@ -1,24 +1,14 @@
-import 'dart:math';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_code_test/constants/constants.dart';
+import 'package:flutter_code_test/constants/dates.dart';
 import 'package:flutter_code_test/constants/theme.dart';
-import 'package:flutter_code_test/environment.dart';
-import 'package:flutter_code_test/service/stock_price_service.dart';
+import 'package:flutter_code_test/providers/stock_data_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class StockPriceDataVisualization extends StatelessWidget {
+class StockPriceDataVisualization extends ConsumerWidget {
   const StockPriceDataVisualization({super.key});
-
-  Future<List<Map<String, dynamic>>> fetchStockData() async {
-    try {
-      final String ticker = AppEnvironment.stockTicker;
-      final data = await StockDataService.fetchStockData(ticker);
-      return data;
-    } catch (e) {
-      throw Exception(e);
-    }
-  }
 
   Widget bottomTitleWidgets(
       double value, TitleMeta meta, List<Map<String, dynamic>> stockData) {
@@ -64,102 +54,126 @@ class StockPriceDataVisualization extends StatelessWidget {
   }
 
   double getMinY(List<double> closePrices) {
-    return closePrices.reduce((a, b) => a < b ? a : b);
+    if (closePrices.isNotEmpty) {
+      return closePrices.reduce((a, b) => a < b ? a : b);
+    }
+    return 0;
   }
 
   double getMaxY(List<double> closePrices) {
-    return closePrices.reduce((a, b) => a > b ? a : b);
+    if (closePrices.isNotEmpty) {
+      return closePrices.reduce((a, b) => a > b ? a : b);
+    }
+    return 0;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stockDataState = ref.watch(stockDataProvider);
+    final List<double> closePrices = stockDataState.stockPrices
+        .map((item) => (item["c"] as num).toDouble())
+        .toList();
+    final minY = getMinY(closePrices);
+    final maxY = getMaxY(closePrices);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Stock Price Data"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              ref.watch(stockDataProvider.notifier).refreshStockData();
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
-      body: FutureBuilder(
-        future: fetchStockData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                snapshot.error.toString(),
-                style: const TextStyle(
-                  color: ThemeColors.errorColor,
-                ),
-              ),
-            );
-          }
-
-          final stockData = snapshot.data!;
-          final List<double> closePrices =
-              stockData.map((item) => (item["c"] as num).toDouble()).toList();
-          final minY = getMinY(closePrices);
-          final maxY = getMaxY(closePrices);
-
-          return Center(
-            child: AspectRatio(
-              aspectRatio: 0.8,
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: LineChart(
-                  LineChartData(
-                    minY: minY,
-                    maxY: maxY,
-                    lineBarsData: [
-                      LineChartBarData(
-                        color: ThemeColors.accentColor,
-                        spots: stockData.asMap().entries.map((e) {
-                          return FlSpot(
-                            e.key.toDouble(),
-                            e.value["c"].toDouble(),
-                          );
-                        }).toList(),
-                        isCurved: true,
-                      ),
-                    ],
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        axisNameWidget: const Text(
-                          "Closing price (USD)",
+      body: Center(
+        child: stockDataState.isLoading
+            ? const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text("Fetching data for latest available day")
+                ],
+              )
+            : stockDataState.isSuccess
+                ? Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 0.8,
+                          child: LineChart(
+                            LineChartData(
+                              minY: minY,
+                              maxY: maxY,
+                              lineBarsData: [
+                                LineChartBarData(
+                                  color: ThemeColors.accentColor,
+                                  spots: stockDataState.stockPrices
+                                      .asMap()
+                                      .entries
+                                      .map((e) {
+                                    return FlSpot(
+                                      e.key.toDouble(),
+                                      e.value["c"].toDouble(),
+                                    );
+                                  }).toList(),
+                                  isCurved: true,
+                                ),
+                              ],
+                              titlesData: FlTitlesData(
+                                leftTitles: AxisTitles(
+                                  axisNameWidget: const Text(
+                                    "Closing price (USD)",
+                                  ),
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 65,
+                                    getTitlesWidget: (value, meta) =>
+                                        leftTitleWidgets(value, meta,
+                                            stockDataState.stockPrices),
+                                  ),
+                                ),
+                                topTitles: const AxisTitles(
+                                  sideTitles: SideTitles(showTitles: false),
+                                ),
+                                rightTitles: const AxisTitles(
+                                  sideTitles: SideTitles(
+                                      showTitles: false, reservedSize: 10),
+                                ),
+                                bottomTitles: AxisTitles(
+                                  axisNameWidget: const Text(
+                                    "Time (HH:mm)",
+                                  ),
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 30,
+                                    getTitlesWidget: (value, meta) =>
+                                        bottomTitleWidgets(value, meta,
+                                            stockDataState.stockPrices),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 65,
-                          // interval: (maxY - minY) / 5,
-                          getTitlesWidget: (value, meta) =>
-                              leftTitleWidgets(value, meta, stockData),
-                        ),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles:
-                            SideTitles(showTitles: false, reservedSize: 10),
-                      ),
-                      bottomTitles: AxisTitles(
-                        axisNameWidget: const Text(
-                          "Time (HH:mm)",
-                        ),
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          getTitlesWidget: (value, meta) =>
-                              bottomTitleWidgets(value, meta, stockData),
-                        ),
-                      ),
+                        const SizedBox(height: 20),
+                        Text(
+                            "Stock data for $stockName as of ${DateConstants.formattedLatestDate}")
+                      ],
                     ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
+                  )
+                : !stockDataState.isSuccess
+                    ? Text(
+                        stockDataState.error,
+                        style: const TextStyle(color: Colors.red),
+                      )
+                    : const SizedBox(),
       ),
     );
   }
