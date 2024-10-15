@@ -38,9 +38,8 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
       state = state.copyWith(isLoading: true);
       final data = await StockDataService.fetchStockData(ticker);
       if (data.isNotEmpty) {
-        state = NotificationState(isLoading: false, isSuccess: true);
+        state = state.copyWith(isLoading: false, isSuccess: true);
       } else {
-        state = NotificationState(isLoading: true, isSuccess: false);
         _addError('Failed to fetch notification data');
       }
     } catch (e) {
@@ -61,7 +60,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     state = state.copyWith(
       isLoading: false,
       isSuccess: false,
-      errorReports: [...state.errorReports, 'Error at $timestamp: $error'],
+      errorReports: ['Error at $timestamp: $error', ...state.errorReports],
     );
   }
 }
